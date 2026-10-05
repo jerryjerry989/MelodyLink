@@ -1632,19 +1632,9 @@ if (isRegisteredMishuaiDevice((BluetoothDevice) device)) {
     }
 
     @SuppressLint("MissingPermission")
-    private boolean isRegisteredSamsungDevice(BluetoothDevice device) {
-        try {
-            java.util.Set<String> uuids = new java.util.HashSet<>();
-            if (device.getUuids() != null) {
-                for (android.os.ParcelUuid uuid : device.getUuids()) uuids.add(uuid.getUuid().toString());
-            }
-            //return SamsungGalaxyBudsCatalog.INSTANCE.find(
-                   //new com.melody.melodylink.domain.DeviceIdentity(device.getName(), device.getAddress(), uuids, null)
-           // ) != null;
-      //  } catch (Throwable ignored) {
-            return false;
-        }
-    }
+private boolean isRegisteredSamsungDevice(BluetoothDevice device) {
+    return false;
+}
 
     private boolean isTargetObject(Object value) {
         if (value == null) return false;
