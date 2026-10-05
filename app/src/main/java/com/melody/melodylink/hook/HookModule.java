@@ -43,7 +43,7 @@ import com.melody.melodylink.xiaomi.config.XiaomiConfigLoadResult;
 import com.melody.melodylink.xiaomi.config.XiaomiConfigLoader;
 import com.melody.melodylink.xiaomi.config.XiaomiDeviceCatalog;
 import com.melody.melodylink.xiaomi.config.XiaomiDeviceConfig;
-import com.melody.melodylink.samsung.config.SamsungGalaxyBudsCatalog;
+import com.melody.melodylink.samsung.config.SamsungGalaxyBudsCatalo;
 import com.melody.melodylink.sony.config.SonyConfigIssue;
 import com.melody.melodylink.sony.config.SonyConfigLoadResult;
 import com.melody.melodylink.sony.config.SonyConfigLoader;
