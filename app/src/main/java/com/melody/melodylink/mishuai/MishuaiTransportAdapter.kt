@@ -39,7 +39,7 @@ class MishuaiTransportAdapter(
     private var currentState: EarbudsState? = null
 
     @Volatile
-    private var isConnected = false
+    var isConnected = false
 
     private val capabilities = EarbudsCapabilities(
         ancModes = setOf(AncMode.OFF, AncMode.NOISE_CANCELING, AncMode.TRANSPARENCY),
