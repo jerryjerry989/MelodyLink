@@ -31,7 +31,7 @@ import com.melody.melodylink.vendor.sony.SonyDeviceCatalogAdapter;
 import com.melody.melodylink.vendor.sony.SonyEarbudsFacade;
 import com.melody.melodylink.vendor.samsung.SamsungEarbudsFacade;
 import com.melody.melodylink.vendor.huawei.HuaweiEarbudsFacade;
-import com.melody.melodylink.vendor.xiaomi.XiaomiEarbudsFacade
+import com.melody.melodylink.vendor.xiaomi.XiaomiEarbudsFacade;
 import com.melody.melodylink.vendor.mishuai.MishuaiEarbudsFacade;
 import com.melody.melodylink.huawei.config.HuaweiDeviceCatalog;
 import com.melody.melodylink.huawei.config.HuaweiConfigIssue;
