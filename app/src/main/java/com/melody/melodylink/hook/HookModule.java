@@ -635,6 +635,8 @@ private MishuaiEarbudsFacade ensureMishuaiTransport() {
                         if (chain.getThisObject() instanceof Activity) {
                             detailActivity = (Activity) chain.getThisObject();
                             requestSonyBatteryRefresh();
+                            requestMishuaiConnection();
+
                         }
                         return result;
                     }
@@ -1908,6 +1910,26 @@ private boolean isRegisteredSamsungDevice(BluetoothDevice device) {
         }
         writeSharedSonyBatteryCommand(address);
     }
+@SuppressLint("MissingPermission")
+private void requestMishuaiConnection() {
+    try {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter == null) return;
+        for (BluetoothDevice device : adapter.getBondedDevices()) {
+            String name = device.getName();
+            if (name == null || !name.toLowerCase().contains("mishuai")) continue;
+            if (mishuaiTransport != null && mishuaiTransport.isConnected()) return;
+            MishuaiEarbudsFacade transport = ensureMishuaiTransport();
+            if (transport == null) continue;
+            targetMishuaiDevice = device;
+            log(Log.INFO, TAG, event("MiShuai SPP connecting from detailActivityCreate: " + name));
+            transport.connect(device);
+            return;
+        }
+    } catch (Throwable t) {
+        log(Log.WARN, TAG, event("MiShuai connection failed: " + t.getMessage()));
+    }
+}
 
     @SuppressLint("MissingPermission")
     private boolean connectTargetSonyTransport(String reason) {
