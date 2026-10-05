@@ -994,9 +994,9 @@ if (isRegisteredMishuaiDevice((BluetoothDevice) device)) {
             if (targetXiaomiDevice != null && isRegisteredXiaomiDevice(targetXiaomiDevice)) {
                 XiaomiEarbudsFacade transport = ensureXiaomiTransport();
                 if (transport != null) transport.setAncMode(domainMode);
-           } else if (targetMishuaiDevice != null && isRegisteredMishuaiDevice(targetMishuaiDevice)) {
+            } else if (targetMishuaiDevice != null && isRegisteredMishuaiDevice(targetMishuaiDevice)) {
                 MishuaiEarbudsFacade transport = ensureMishuaiTransport();
-                if (transport != null) transport.setAncMode(domainMode)
+                if (transport != null) transport.setAncMode(domainMode);
             } else if (targetHuaweiDevice != null && isRegisteredHuaweiDevice(targetHuaweiDevice)) {
                 huaweiTransport.setAncMode(domainMode);
             } else if (targetSamsungDevice != null && isRegisteredSamsungDevice(targetSamsungDevice)) {
