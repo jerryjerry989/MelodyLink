@@ -31,7 +31,8 @@ import com.melody.melodylink.vendor.sony.SonyDeviceCatalogAdapter;
 import com.melody.melodylink.vendor.sony.SonyEarbudsFacade;
 import com.melody.melodylink.vendor.samsung.SamsungEarbudsFacade;
 import com.melody.melodylink.vendor.huawei.HuaweiEarbudsFacade;
-import com.melody.melodylink.vendor.xiaomi.XiaomiEarbudsFacade;
+import com.melody.melodylink.vendor.xiaomi.XiaomiEarbudsFacade
+import com.melody.melodylink.vendor.mishuai.MishuaiEarbudsFacade;
 import com.melody.melodylink.huawei.config.HuaweiDeviceCatalog;
 import com.melody.melodylink.huawei.config.HuaweiConfigIssue;
 import com.melody.melodylink.huawei.config.HuaweiConfigLoadResult;
@@ -91,6 +92,10 @@ public final class HookModule extends XposedModule {
     private volatile BluetoothDevice targetSamsungDevice;
     private volatile BluetoothDevice targetHuaweiDevice;
     private volatile BluetoothDevice targetXiaomiDevice;
+    private volatile BluetoothDevice targetMishuaiDevice;
+    private volatile MishuaiEarbudsFacade mishuaiTransport;
+    private final MelodySessionState mishuaiSessionState = new MelodySessionState();
+
     /** Host A2DP/HFP state remains authoritative for UI connection, even if AF00 control setup fails. */
     private volatile boolean xiaomiHostConnected;
     private volatile Object earphoneRepository;
@@ -266,6 +271,45 @@ public final class HookModule extends XposedModule {
             return xiaomiTransport;
         }
     }
+    
+private MishuaiEarbudsFacade ensureMishuaiTransport() {
+    MishuaiEarbudsFacade existing = mishuaiTransport;
+    if (existing != null) return existing;
+    Application application = currentApplication();
+    if (application == null) return null;
+    synchronized (this) {
+        if (mishuaiTransport != null) return mishuaiTransport;
+        mishuaiTransport = new MishuaiEarbudsFacade(application, new MishuaiEarbudsFacade.Listener() {
+            @Override public void onConnecting() { log(Log.INFO, TAG, event("MiShuai SPP connecting")); }
+            @Override public void onConnected(EarbudsState state) {
+                mishuaiSessionState.acceptAnc(state);
+                mishuaiSessionState.acceptBattery(state);
+                publishBatteryState(state, "MiShuai connected");
+                refreshTargetRepository("MiShuai connected");
+                log(Log.INFO, TAG, event("MiShuai SPP connected; ANC state=" + state.getAncMode()));
+            }
+            @Override public void onStateChanged(EarbudsState state) {
+                mishuaiSessionState.acceptAnc(state);
+                mishuaiSessionState.acceptBattery(state);
+                refreshTargetRepository("MiShuai SPP status notification");
+                log(Log.INFO, TAG, event("MiShuai SPP state ANC=" + state.getAncMode()));
+            }
+            @Override public void onBatteryState(EarbudsState state) {
+                mishuaiSessionState.acceptBattery(state);
+                publishBatteryState(state, "MiShuai battery event");
+                refreshTargetRepository("MiShuai battery event");
+            }
+            @Override public void onAncWriteResult(boolean success, EarbudsState state, String reason) {
+                log(Log.INFO, TAG, event("MiShuai ANC write result=" + success));
+            }
+            @Override public void onDisconnected() { log(Log.INFO, TAG, event("MiShuai SPP disconnected")); }
+            @Override public void onFailed(String reason) { log(Log.WARN, TAG, event("MiShuai SPP failed: " + reason)); }
+            @Override public void onLog(String message) { log(Log.INFO, TAG, event(message)); }
+        });
+        return mishuaiTransport;
+    }
+}
+
 
     private final SamsungEarbudsFacade samsungTransport = new SamsungEarbudsFacade(new SamsungEarbudsFacade.Listener() {
         @Override
@@ -852,6 +896,17 @@ public final class HookModule extends XposedModule {
                 transport.connect((BluetoothDevice) device);
                 return true;
             }
+            
+if (isRegisteredMishuaiDevice((BluetoothDevice) device)) {
+    targetMishuaiDevice = (BluetoothDevice) device;
+    rememberTargetAddress((String) address);
+    MishuaiEarbudsFacade transport = ensureMishuaiTransport();
+    if (transport == null) return false;
+    log(Log.INFO, TAG, event("starting MiShuai SPP session name=" + ((BluetoothDevice) device).getName()));
+    transport.connect((BluetoothDevice) device);
+    return true;
+}
+
             if (isRegisteredHuaweiDevice((BluetoothDevice) device)) {
                 targetHuaweiDevice = (BluetoothDevice) device;
                 rememberTargetAddress((String) address);
@@ -939,6 +994,9 @@ public final class HookModule extends XposedModule {
             if (targetXiaomiDevice != null && isRegisteredXiaomiDevice(targetXiaomiDevice)) {
                 XiaomiEarbudsFacade transport = ensureXiaomiTransport();
                 if (transport != null) transport.setAncMode(domainMode);
+           } else if (targetMishuaiDevice != null && isRegisteredMishuaiDevice(targetMishuaiDevice)) {
+                MishuaiEarbudsFacade transport = ensureMishuaiTransport();
+                if (transport != null) transport.setAncMode(domainMode)
             } else if (targetHuaweiDevice != null && isRegisteredHuaweiDevice(targetHuaweiDevice)) {
                 huaweiTransport.setAncMode(domainMode);
             } else if (targetSamsungDevice != null && isRegisteredSamsungDevice(targetSamsungDevice)) {
@@ -978,6 +1036,10 @@ public final class HookModule extends XposedModule {
                 && ensureXiaomiTransport() != null && ensureXiaomiTransport().isConnected()) {
             pendingAncMode = null;
             ensureXiaomiTransport().setAncMode(domainMode);
+        } else if (targetMishuaiDevice != null && isRegisteredMishuaiDevice(targetMishuaiDevice)
+            && ensureMishuaiTransport() != null && ensureMishuaiTransport().isConnected()) {
+            pendingAncMode = null;
+            ensureMishuaiTransport().setAncMode(domainMode);
         } else if (targetHuaweiDevice != null && isRegisteredHuaweiDevice(targetHuaweiDevice)
                 && huaweiTransport.isConnected()) {
             pendingAncMode = null;
@@ -2313,6 +2375,19 @@ public final class HookModule extends XposedModule {
             return false;
         }
     }
+    
+@SuppressLint("MissingPermission")
+private boolean isRegisteredMishuaiDevice(BluetoothDevice device) {
+    try {
+        if (device == null) return false;
+        String name = device.getName();
+        if (name == null) return false;
+        return name.toLowerCase().contains("mishuai");
+    } catch (Throwable ignored) {
+        return false;
+    }
+}
+
 
     private void addHuaweiLowLatencyPreference(Object category, ClassLoader loader, Activity activity, int order) {
         Object item = newSwitchPreference(loader, activity);
