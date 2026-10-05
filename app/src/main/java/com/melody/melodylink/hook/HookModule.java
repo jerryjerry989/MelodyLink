@@ -43,7 +43,7 @@ import com.melody.melodylink.xiaomi.config.XiaomiConfigLoadResult;
 import com.melody.melodylink.xiaomi.config.XiaomiConfigLoader;
 import com.melody.melodylink.xiaomi.config.XiaomiDeviceCatalog;
 import com.melody.melodylink.xiaomi.config.XiaomiDeviceConfig;
-import com.melody.melodylink.samsung.config.SamsungGalaxyBudsCatalo;
+//import com.melody.melodylink.samsung.config.SamsungGalaxyBudsCatalo;
 import com.melody.melodylink.sony.config.SonyConfigIssue;
 import com.melody.melodylink.sony.config.SonyConfigLoadResult;
 import com.melody.melodylink.sony.config.SonyConfigLoader;
@@ -1638,10 +1638,10 @@ if (isRegisteredMishuaiDevice((BluetoothDevice) device)) {
             if (device.getUuids() != null) {
                 for (android.os.ParcelUuid uuid : device.getUuids()) uuids.add(uuid.getUuid().toString());
             }
-            return SamsungGalaxyBudsCatalog.INSTANCE.find(
-                    new com.melody.melodylink.domain.DeviceIdentity(device.getName(), device.getAddress(), uuids, null)
-            ) != null;
-        } catch (Throwable ignored) {
+            //return SamsungGalaxyBudsCatalog.INSTANCE.find(
+                   //new com.melody.melodylink.domain.DeviceIdentity(device.getName(), device.getAddress(), uuids, null)
+           // ) != null;
+      //  } catch (Throwable ignored) {
             return false;
         }
     }
